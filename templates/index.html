@@ -1,0 +1,199 @@
+<style>
+    body {
+        background-color: #222222;
+    }
+
+    #top {
+        display: flex;
+        justify-content: center;
+    }
+
+    .component {
+        background-color: #111111;
+        color: white;
+        padding: 20px;
+        width: 300px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        color: red;
+        border-radius: 20px;
+        margin: 10px;
+    }
+
+    .controlls {
+        border-radius: 20px;
+        background-color: #111111;
+        color: white;
+        width: 222px;
+        height: 222px;
+        margin: 20px;
+    }
+
+    #controlls {
+        display: flex;
+        justify-content: center;
+    }
+
+    #stats {
+        width: 1040px;
+        margin: 10px;
+        font-family: Arial, sans-serif;
+        color: white;
+        background-color: #111111;
+        padding: 10px;
+        border-radius: 20px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+    }
+</style>
+
+<div id="box">
+    <div id="top">
+        <div id="state_0" class="component">
+            <h2>CONTROLLER</h2>
+        </div>
+        <div id="state_1" class="component">
+            <h2>TRANSMITTER</h2>
+        </div>
+        <div id="state_2" class="component">
+            <h2>PLANE</h2>
+        </div>
+    </div>
+
+    <div id="controlls">
+        <div id="throttle" class="controlls" style="align-items: center;justify-content: center;display: flex;">
+            <div
+                style="height: 200px;width: 100px;background-color: #aaaaaa;border-radius: 20px;position: relative;border: 5px solid #444444;">
+                <div id="neddle_1"
+                    style="background-color: #551100; width: 100px;height: 10px;border-radius: 15px;top:95px;position: absolute;">
+                </div>
+                <div id="stop">
+                    <img src="static/images/stop.svg" style="width: 100px;top: 50px;position: relative;" />
+                </div>
+            </div>
+        </div>
+        <div id="yaw" class="controlls" style="align-items: center;justify-content: center;display: flex;">
+            <div
+                style="height: 100px;width: 200px;background-color: #2266aa;border-radius: 20px;position: relative;border: 5px solid #444444;">
+                <div id="neddle_2"
+                    style="background-color: orange; width: 10px;height: 100px;border-radius: 5px;right: 95;position: absolute;">
+                </div>
+            </div>
+        </div>
+        <div id="pitch" class="controlls" style="align-items: center;justify-content: center;display: flex;">
+            <div
+                style="height: 200px;width: 100px;background-color: #2266aa;border-radius: 20px;position: relative;border: 5px solid #444444;">
+                <div id="neddle_3"
+                    style="background-color: orange; width: 100px;height: 10px;border-radius: 5px;top:95px;position: absolute;">
+                </div>
+            </div>
+        </div>
+        <div id="roll" class="controlls">
+            <div style="height: 200px;width: 200px;background-color: #2266aa;border-radius: 50%;position:
+                relative;border: 5px solid #444444;">
+                <div id="neddle_4"
+                    style="background-color: orange; width: 200px;height: 10px;border-radius: 5px;top: 100px;position: absolute;">
+                    <div
+                        style="background-color: #111111;height: 10px;width: 10px;border-radius: 5px;right:95px;position: absolute;;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="stats">
+        <div style="padding-left: 10px">
+            <h1>CELL VOLTAGE: </h1>
+        </div>
+        <div style="padding-left: 10px">
+            <h1 id="voltage">4V</h1>
+        </div>
+        <div style="padding-left: 10px">
+            <h1> PACKET LOSS: </h1>
+        </div>
+        <div style="padding-left: 10px">
+            <h1 id="percentage">100%</h1>
+        </div>
+    </div>
+    <div style="width: 1040px;margin: auto;align-items: center;justify-content: center;display: flex;">
+        <div id="flaps" class="component">
+            <h1>FLAPS</h1>
+        </div>
+        <div id="ccs" class="component">
+            <h1>CCS</h1>
+        </div>
+        <div id="release" class="component">
+            <h1>RELEASE</h1>
+        </div>
+        <div id="sas" class="component">
+            <h1>SAS</h1>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function getData() {
+        const res = await fetch('/data');
+        const data = await res.json();
+
+        for (let i = 0; i < 3; i++) {
+            if (data.state[i] === 0) {
+                document.getElementById("state_" + i).style.color = "red";
+            }
+            if (data.state[i] === 1) {
+                document.getElementById("state_" + i).style.color = "green";
+            }
+            if (data.state[i] === 2) {
+                document.getElementById("state_" + i).style.color = "orange";
+            }
+        }
+        document.getElementById("neddle_1").style.height = (data.controlls[0]) * 2 + "px";
+        document.getElementById("neddle_1").style.top = (100 - data.controlls[0]) * 2 + "px";
+        document.getElementById("neddle_2").style.right = (100 - data.controlls[1]) * 2 - 5 + "px";
+        document.getElementById("neddle_3").style.top = (100 - data.controlls[2]) * 2 - 5 + "px";
+        document.getElementById("neddle_4").style.rotate = ((data.controlls[3]) / 100 - 0.5) * 80 + "deg";
+        document.getElementById("percentage").textContent = data.packet_loss + "%";
+        document.getElementById("voltage").textContent = data.voltage + "V;";
+        if (data.armed) {
+            document.getElementById("stop").style.display = "none";
+        }
+        else {
+            document.getElementById("stop").style.display = "block";
+        }
+        if (data.flaps) {
+            document.getElementById("flaps").style.color = "green"
+        }
+        else {
+            document.getElementById("flaps").style.color = "red"
+        }
+        if (data.ccs) {
+            document.getElementById("ccs").style.color = "green"
+        }
+        else {
+            document.getElementById("ccs").style.color = "red"
+        }
+        if (data.release) {
+            document.getElementById("release").style.color = "green"
+        }
+        else {
+            document.getElementById("release").style.color = "red"
+        }
+        if (data.sas) {
+            document.getElementById("sas").style.color = "green"
+        }
+        else {
+            document.getElementById("sas").style.color = "red"
+        }
+        if (data.voltage > 3.6) {
+            document.getElementById("voltage").style.color = "green"
+        }
+        else {
+            document.getElementById("voltage").style.color = "orange"
+        }
+
+    }
+
+    setInterval(getData, 10);
+
+</script>
