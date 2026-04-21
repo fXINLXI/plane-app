@@ -22,7 +22,7 @@ void setup() {
 
 void loop() {
   if(packets>=30){
-    Serial.println(packet_loss/30);
+    Serial.println((float)packet_loss/30.0);
     packet_loss=0;z
     packets=0;
   }
