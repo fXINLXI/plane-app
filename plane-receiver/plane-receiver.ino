@@ -15,7 +15,7 @@ uint8_t received_yaw;
 uint8_t received_motor;
 
 Servo servos[7];
-uint8_t servo_pins[7]={0,2,4,6,8,12,14};
+uint8_t servo_pins[7]={0,2,4,6,10,12,14};
 
 int last_connection;
 
@@ -78,6 +78,8 @@ void loop() {
     flaps          = (received   & 0x00000100)>>8;
     sas            = (received   & 0x00000001);
 
+    last_connection=millis();
+
     print_received();
   }
 
@@ -88,9 +90,8 @@ void loop() {
     servos[0].write(MIN(MAX(received_roll+flaps*90,0),180));
     servos[1].write(MIN(MAX(received_roll-flaps*90,0),180));
     servos[2].write(received_pitch);
-    servos[3].write(received_pitch);
-    servos[4].write(received_yaw);
-    servos[5].write(received_motor);
+    servos[3].write(received_yaw);
+    servos[4].write(received_motor);
   }
 }
 
@@ -127,6 +128,7 @@ void mpu_calibrate(){
   digitalWrite(23,HIGH);
   delay(300);
   digitalWrite(23,LOW);
+  delay(100);
 
   int no_measures=3000;
 
@@ -170,16 +172,12 @@ void mpu_update_angle_x(){
 void print_received(){
   Serial.print(received,HEX);
   Serial.print(" ");
-  servos[0].write(received_motor);
   Serial.print(received_motor);
   Serial.print(" ");
-  servos[1].write(received_yaw);
   Serial.print(received_yaw);
   Serial.print(" ");
-  servos[2].write(received_pitch);
   Serial.print(received_pitch);
   Serial.print(" ");
-  servos[3].write(received_roll);
   Serial.print(received_roll);
   Serial.print(" ");
   Serial.print(release);
