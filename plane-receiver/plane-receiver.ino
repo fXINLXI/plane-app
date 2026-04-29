@@ -9,10 +9,10 @@ const byte adres[5] = {'1','0','1','0','1'};
 
 uint32_t received=0;
 
-uint8_t received_roll;
-uint8_t received_pitch;
-uint8_t received_yaw;
-uint8_t received_motor;
+uint8_t received_roll=90;
+uint8_t received_pitch=90;
+uint8_t received_yaw=90;
+uint8_t received_motor=90;
 
 Servo servos[7];
 uint8_t servo_pins[7]={0,2,4,6,10,12,14};
@@ -25,12 +25,13 @@ int last_connection;
 float c_gx;
 
 float angle_x=0;
+float target_angle_x=0;
 
 long last_read_gyro;
 
 float gyro_x_speed=0;
 
-bool sas=1;
+bool sas=0;
 bool flaps=1;
 bool release=0;
 
@@ -84,11 +85,18 @@ void loop() {
   }
 
   if(sas){
-
+    servos[0].write(MIN(MAX(180-received_roll+flaps*90+(angle_x-target_angle_x)*3,0),180));
+    servos[1].write(MIN(MAX(180-received_roll-flaps*90+(angle_x-target_angle_x)*3,0),180));
+    servos[2].write(received_pitch);
+    servos[3].write(received_yaw);
+    servos[4].write(received_motor);
+    if(received_roll!=90){
+      target_angle_x=angle_x;
+    }
   }
   else{
-    servos[0].write(MIN(MAX(received_roll+flaps*90,0),180));
-    servos[1].write(MIN(MAX(received_roll-flaps*90,0),180));
+    servos[0].write(MIN(MAX(180-received_roll+flaps*90+gyro_x_speed/2,0),180));
+    servos[1].write(MIN(MAX(180-received_roll-flaps*90+gyro_x_speed/2,0),180));
     servos[2].write(received_pitch);
     servos[3].write(received_yaw);
     servos[4].write(received_motor);
@@ -186,5 +194,7 @@ void print_received(){
   Serial.print(" ");
   Serial.print(sas);
   Serial.print(" ");
-  Serial.println(angle_x);
+  Serial.print(angle_x);
+  Serial.print(" ");
+  Serial.println(gyro_x_speed);
 }
