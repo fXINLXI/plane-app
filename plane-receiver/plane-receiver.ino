@@ -31,9 +31,9 @@ long last_read_gyro;
 
 float gyro_x_speed=0;
 
-bool sas=0;
+bool sas=1;
 bool flaps=1;
-bool release=0;
+bool release=1;
 
 void setup() {
   delay(2000);
@@ -90,6 +90,7 @@ void loop() {
     servos[2].write(received_pitch);
     servos[3].write(received_yaw);
     servos[4].write(received_motor);
+    servos[5].write(180-release*180);
     if(received_roll!=90){
       target_angle_x=angle_x;
     }
@@ -100,6 +101,7 @@ void loop() {
     servos[2].write(received_pitch);
     servos[3].write(received_yaw);
     servos[4].write(received_motor);
+    servos[5].write(180-release*180);
   }
 }
 

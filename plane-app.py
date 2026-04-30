@@ -4,6 +4,8 @@ import threading
 import time
 import serial
 import serial.tools.list_ports
+import numpy as np
+import sounddevice as sd
 
 app = Flask(__name__)
 
@@ -34,11 +36,30 @@ controlls=[0,0,0,0,0]
 
 packet_loss=0
 
+sound_avaliable=1
+
+overwrite=0
+
+def beep(duration, frequency):
+    global sound_avaliable
+    global overwrite
+    overwrite=1
+    sound_avaliable=0
+    fs = 44100
+    t = np.linspace(0, duration/2, int(fs * duration/2), False)
+    tone = np.sin(2 * np.pi * frequency * t)
+    sd.play(tone, fs, blocking=False)
+    sd.wait()
+    sound_avaliable=1
+    sd.play(tone, fs, blocking=False)
+    overwrite=0
+
 def serial_loop():
     global ser
     global controlls
     global packet_loss
     global state
+    global armed
 
     while True:
         try:
@@ -52,7 +73,6 @@ def serial_loop():
                     ser = None
                 state[1]=0
                 state[2]=0
-                controlls[0]=0
                 packet_loss=100
             else:
                 if not ser:
@@ -107,10 +127,10 @@ def joystick_loop():
             x_right=joystick.get_axis(4)
             y_right=joystick.get_axis(3)
 
-            x_left=x_left*(abs(x_left)>0.14)
-            y_left=y_left*(abs(y_left)>0.14)
-            x_right=x_right*(abs(x_right)>0.14)
-            y_right=y_right*(abs(y_right)>0.14)
+            x_left=x_left*(abs(x_left)>0.16)
+            y_left=y_left*(abs(y_left)>0.16)
+            x_right=x_right*(abs(x_right)>0.16)
+            y_right=y_right*(abs(y_right)>0.16)
 
             if not ccs:
                 controlls[0] = max(-y_left*100,0)
@@ -124,33 +144,44 @@ def joystick_loop():
             if armed:
                 if joystick.get_button(2) and joystick.get_axis(1)<=0.3:
                     armed=0
+                    beep(0.5,1000)
+                    print(1)
             else:
                 controlls[0]=0
                 if joystick.get_button(2) and joystick.get_axis(1)>=0.3:
                     armed=1
+                    beep(0.5,2000)
             events=pygame.event.get()
             for event in events:
                 if event.type==pygame.JOYBUTTONDOWN:
                     if event.button==0:
                         if flaps==0:
                             flaps=1
+                            beep(0.5,2000)
                         else:
                             flaps=0
+                            beep(0.5,1000)
                     if event.button==3:
                         if ccs==0:
                             ccs=1
+                            beep(0.5,2000)
                         else:
                             ccs=0
+                            beep(0.5,1000)
                     if event.button==1:
                         if release==0:
                             release=1
+                            beep(0.5,2000)
                         else:
                             release=0
+                            beep(0.5,1000)
                     if event.button==4:
                         if sas==0:
                             sas=1
+                            beep(0.5,2000)
                         else:
                             sas=0
+                            beep(0.5,1000)
                     
         else:
             controlls[0]=0
