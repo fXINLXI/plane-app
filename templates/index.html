@@ -133,6 +133,38 @@
 </div>
 
 <script>
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const osc = ctx.createOscillator();
+    const lfo = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    const lfoGain = ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.value = 600;
+
+    lfo.frequency.value = 5;
+    lfoGain.gain.value = 200;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    gain.gain.value = 0;
+
+    osc.start();
+    lfo.start();
+
+    gain.gain.setTargetAtTime(0.2, ctx.currentTime, 0.05);
+
+    document.addEventListener("click", async () => {
+        await ctx.resume();
+    });
+
     async function getData() {
         const res = await fetch('/data');
         const data = await res.json();
