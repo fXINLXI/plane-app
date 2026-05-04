@@ -93,31 +93,33 @@ def serial_loop():
                         packet_loss = float(ser.readline().decode().strip())*100
                         if packet_loss<30:
                             state[2]=1
-                            sounds["radio_lost"].stop()
-                            sounds["radio_weak"].stop()
-                            playing[0]=0
-                            playing[1]=0
                         elif packet_loss<80:
                             state[2]=2
-                            if not playing[0]:
-                                sounds["radio_weak"].play(loops=-1)
-                            sounds["radio_lost"].stop()
-                            playing[0]=1
-                            playing[1]=0
                         else:
                             state[2]=0
-                            if not playing[1]:
-                                sounds["radio_lost"].play(loops=-1)
-                            sounds["radio_weak"].stop()
-                            playing[0]=0
-                            playing[1]=1
-                        
         except:
             pass
-                
+        if state[0]==0 or state[0]==0 or state[2]==0:
+            if not playing[1]:
+                sounds["radio_lost"].play(loops=-1)
+            sounds["radio_weak"].stop()
+            playing[0]=0
+            playing[1]=1
+        elif state[0]==2 or state[1]==2 or state[2]==2:
+            print(1)
+            if not playing[0]:
+                sounds["radio_weak"].play(loops=-1)
+            sounds["radio_lost"].stop()
+            playing[0]=1
+            playing[1]=0
+        else:
+            sounds["radio_lost"].stop()
+            sounds["radio_weak"].stop()
+            playing[0]=0
+            playing[1]=0
+
 
         time.sleep(0.01)
-
 
 def joystick_loop():
     global controlls
