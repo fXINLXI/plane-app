@@ -31,14 +31,14 @@ long last_read_gyro;
 
 const float k_p=0.8;
 const float k_i=1.7;
-const float k_d=0.05;
 float gyro_x_int=0;
 float gyro_x_prop=0;
-float gyro_x_derv=0;
 
 float pid_roll=90;
-float last_x_speed=0;
 float dt;
+
+float left_roll=90;
+float right_roll=90;
 
 void setup() {
   delay(2000);
@@ -93,10 +93,8 @@ void loop() {
     print_received();
   }
 
-  pid_roll = (gyro_x_prop*k_p+gyro_x_int*k_i-gyro_x_derv*k_d);
-
-  servos[0].write(MIN(MAX(90+pid_roll+flaps*90,0),180));
-  servos[1].write(MIN(MAX(90+pid_roll-flaps*90,0),180));
+  servos[0].write(MIN(MAX(left_roll,0),180));
+  servos[1].write(MIN(MAX(right_roll,0),180));
   servos[2].write(180-received_pitch);
   servos[3].write(received_yaw);
   servos[4].write(received_motor);
@@ -178,19 +176,20 @@ void mpu_update_pid(){
   Wire1.requestFrom(0x68, 2);
   while(Wire1.available()<2){delay(1);}
   int16_t gyro_x_raw = Wire1.read()<<8|Wire1.read();
-  gyro_x_prop = (((float)gyro_x_raw-c_gx)/131.0-received_roll+90);//               deg/sec
+  gyro_x_prop = (((float)gyro_x_raw-c_gx)/131.0-received_roll+90);//  deg/sec
   long now = millis();
 
   dt=(now-last_read_gyro)/1000.0;
+  pid_roll = (gyro_x_prop*k_p+gyro_x_int*k_i);
 
-  gyro_x_int+=gyro_x_prop*dt;//                    deg
-  if(dt!=0.0){
-    gyro_x_derv=(gyro_x_prop-last_x_speed)/dt;//          deg/sec^2
+  left_roll=90+pid_roll-flaps*90;
+  right_roll=90+pid_roll+flaps*90;
+
+  if((left_roll>0 && left_roll<180) || (right_roll>0 && left_roll<180)){
+    gyro_x_int+=gyro_x_prop*dt;//                                     deg
   }
-  
 
   last_read_gyro=now;
-  last_x_speed=gyro_x_prop;
 }
 
 void print_received(){
