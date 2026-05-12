@@ -15,35 +15,38 @@ uint8_t received_yaw=90;
 uint8_t received_motor=90;
 
 Servo servos[7];
-uint8_t servo_pins[7]={0,2,4,6,10,12,14};
+uint8_t servo_pins[7]={0,2,4,6,14,12,10};
 
 int last_connection;
 
 #define SDA_PIN 26
 #define SCL_PIN 27
 
-float c_gx;
-
-float angle_x=0;
-float target_angle_x=0;
-
-long last_read_gyro;
-
-float gyro_x_speed=0;
-
 bool sas=1;
 bool flaps=1;
 bool release=1;
+
+float c_gx;
+long last_read_gyro;
+
+const float k_p=0.8;
+const float k_i=1.7;
+const float k_d=0.05;
+float gyro_x_int=0;
+float gyro_x_prop=0;
+float gyro_x_derv=0;
+
+float pid_roll=90;
+float last_x_speed=0;
+float dt;
 
 void setup() {
   delay(2000);
   Serial.begin(115200);
   pinMode(23, OUTPUT);
-
-  for(int i = 0; i<7; i++){
-    servos[i].attach(servo_pins[i]);
-  }
   
+  setup_servo();
+
   init_radio();
   setup_radio();
 
@@ -60,11 +63,17 @@ void setup() {
 }
 
 void loop() {
-  mpu_update_angle_x();
+  mpu_update_pid();
 
   if(millis()-last_connection>1000){
     received_motor=0;
-    sas=1;
+    sas=0;
+    release=1;
+    flaps=1;
+    digitalWrite(23,HIGH);
+  }
+  else{
+    digitalWrite(23,LOW);
   }
 
   if(radio.available()){
@@ -84,25 +93,15 @@ void loop() {
     print_received();
   }
 
-  if(sas){
-    servos[0].write(MIN(MAX(180-received_roll+flaps*90+(angle_x-target_angle_x)*3,0),180));
-    servos[1].write(MIN(MAX(180-received_roll-flaps*90+(angle_x-target_angle_x)*3,0),180));
-    servos[2].write(received_pitch);
-    servos[3].write(received_yaw);
-    servos[4].write(received_motor);
-    servos[5].write(180-release*180);
-    if(received_roll!=90){
-      target_angle_x=angle_x;
-    }
-  }
-  else{
-    servos[0].write(MIN(MAX(180-received_roll+flaps*90+gyro_x_speed/2,0),180));
-    servos[1].write(MIN(MAX(180-received_roll-flaps*90+gyro_x_speed/2,0),180));
-    servos[2].write(received_pitch);
-    servos[3].write(received_yaw);
-    servos[4].write(received_motor);
-    servos[5].write(180-release*180);
-  }
+  pid_roll = (gyro_x_prop*k_p+gyro_x_int*k_i-gyro_x_derv*k_d);
+
+  servos[0].write(MIN(MAX(90+pid_roll+flaps*90,0),180));
+  servos[1].write(MIN(MAX(90+pid_roll-flaps*90,0),180));
+  servos[2].write(180-received_pitch);
+  servos[3].write(received_yaw);
+  servos[4].write(received_motor);
+  servos[5].write(180-release*180);
+  
 }
 
 void init_radio(){
@@ -127,6 +126,14 @@ void setup_radio(){
   radio.setRetries(4, 3); 
 }
 
+void setup_servo(){
+  servos[0].attach(servo_pins[0]);
+  servos[1].attach(servo_pins[1]);
+  servos[2].attach(servo_pins[2],600,2400);
+  servos[3].attach(servo_pins[3]);
+  servos[4].attach(servo_pins[4]);
+  servos[5].attach(servo_pins[5]);
+}
 void mpu_begin(){
   Wire1.beginTransmission(0x68);
   Wire1.write(0x6B);
@@ -163,7 +170,7 @@ void mpu_calibrate(){
   digitalWrite(23,LOW);
 }
 
-void mpu_update_angle_x(){
+void mpu_update_pid(){
   Wire1.beginTransmission(0x68);
   Wire1.write(0x43);
   Wire1.endTransmission(false);
@@ -171,12 +178,19 @@ void mpu_update_angle_x(){
   Wire1.requestFrom(0x68, 2);
   while(Wire1.available()<2){delay(1);}
   int16_t gyro_x_raw = Wire1.read()<<8|Wire1.read();
-  gyro_x_speed = ((float)gyro_x_raw-c_gx)/131.0;
+  gyro_x_prop = (((float)gyro_x_raw-c_gx)/131.0-received_roll+90);//               deg/sec
   long now = millis();
 
-  angle_x+=gyro_x_speed*(now-last_read_gyro)/1000.0;
+  dt=(now-last_read_gyro)/1000.0;
+
+  gyro_x_int+=gyro_x_prop*dt;//                    deg
+  if(dt!=0.0){
+    gyro_x_derv=(gyro_x_prop-last_x_speed)/dt;//          deg/sec^2
+  }
+  
 
   last_read_gyro=now;
+  last_x_speed=gyro_x_prop;
 }
 
 void print_received(){
@@ -194,9 +208,5 @@ void print_received(){
   Serial.print(" ");
   Serial.print(flaps);
   Serial.print(" ");
-  Serial.print(sas);
-  Serial.print(" ");
-  Serial.print(angle_x);
-  Serial.print(" ");
-  Serial.println(gyro_x_speed);
+  Serial.println(sas);
 }

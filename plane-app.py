@@ -25,7 +25,7 @@ flaps=0
 ccs=0
 release=0
 sas=0
-controlls=[0,0,0,0,0]
+controlls=[0,0,0,0]
 packet_loss=0
 
 radio_alarm=0
@@ -40,12 +40,28 @@ playing=[0,0]
 def play(sound_name):
     sounds[sound_name].play()
 
+def abort():
+    global release
+    global sas
+    global flaps
+    global armed
+    global controlls
+    release=1
+    sas=0
+    flaps=1
+    controlls[0]=0
+    controlls[1]=50
+    controlls[2]=50
+    controlls[3]=50
+    armed=0
+
 def serial_loop():
     global ser
     global controlls
     global packet_loss
     global state
     global playing
+
 
     while True:
         try:
@@ -59,6 +75,7 @@ def serial_loop():
                     ser = None
                 state[1]=0
                 state[2]=0
+
                 packet_loss=100
                 if not playing[1]:
                     sounds["radio_lost"].play(loops=-1)
@@ -74,7 +91,7 @@ def serial_loop():
                         ser = None
                     state[1]=2
                     state[2]=0
-                    controlls[0]=0
+                    abort()
                     packet_loss=100
                     if not playing[1]:
                         sounds["radio_lost"].play(loops=-1)
@@ -99,7 +116,7 @@ def serial_loop():
                             state[2]=0
         except:
             pass
-        if state[0]==0 or state[0]==0 or state[2]==0:
+        if state[0]==0 or state[1]==0 or state[2]==0:
             if not playing[1]:
                 sounds["radio_lost"].play(loops=-1)
             sounds["radio_weak"].stop()
@@ -131,8 +148,6 @@ def joystick_loop():
     global sas
 
     while True:
-        global controlls
-
         number=pygame.joystick.get_count()
         if joystick and number:
             x_left=joystick.get_axis(0)
@@ -184,6 +199,7 @@ def joystick_loop():
                         if release==0:
                             play("event_on")
                             release=1
+                            abort()
                         else:
                             release=0
                             play("event_off")
@@ -196,23 +212,20 @@ def joystick_loop():
                             play("event_off")
                     
         else:
-            controlls[0]=0
-            armed=0
+            abort()
             state[0]=0
-            sas=1
-            ccs=0
+
             while number<=0:
                 pygame.event.pump()
                 number=pygame.joystick.get_count()
                 time.sleep(0.05)
-            sas=0
             joystick = pygame.joystick.Joystick(0)
             joystick.init()
             pygame.event.pump()
             print(f"Pad detected: {joystick.get_name()}")
             state[0]=1
         pygame.event.pump()
-        time.sleep(0.01)
+        time.sleep(0.01)            
 
         
 
