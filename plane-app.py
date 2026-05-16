@@ -50,7 +50,7 @@ def abort():
     sas=0
     flaps=1
     controlls[0]=0
-    controlls[1]=50
+    controlls[1]=501111
     controlls[2]=50
     controlls[3]=50
     armed=0

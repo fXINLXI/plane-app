@@ -128,8 +128,8 @@ void setup_servo(){
   servos[0].attach(servo_pins[0]);
   servos[1].attach(servo_pins[1]);
   servos[2].attach(servo_pins[2],600,2400);
-  servos[3].attach(servo_pins[3]);
-  servos[4].attach(servo_pins[4]);
+  servos[3].attach(servo_pins[3],1200,1800);
+  servos[4].attach(servo_pins[4],1200,1800);
   servos[5].attach(servo_pins[5]);
 }
 void mpu_begin(){
