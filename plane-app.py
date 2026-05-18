@@ -25,6 +25,7 @@ flaps=0
 ccs=0
 release=0
 sas=0
+weak=0
 controlls=[0,0,0,0]
 packet_loss=0
 
@@ -146,6 +147,7 @@ def joystick_loop():
     global ccs
     global release
     global sas
+    global weak
 
     while True:
         number=pygame.joystick.get_count()
@@ -165,6 +167,8 @@ def joystick_loop():
             else:
                 controlls[0]+=joystick.get_axis(5)-joystick.get_axis(2)
                 controlls[0]=min(max(controlls[0],0),100)
+            if weak:
+                controlls[0]=min(max(controlls[0],0),50)
             controlls[1] = x_left*50+50
 
             controlls[2] = -x_right*50+50
@@ -210,6 +214,13 @@ def joystick_loop():
                         else:
                             sas=0
                             play("event_off")
+                    if event.button==5:
+                        if weak==0:
+                            weak=1
+                            play("event_on")
+                        else:
+                            weak=0
+                            play("event_off")
                     
         else:
             abort()
@@ -240,7 +251,7 @@ def home():
 
 @app.route("/data")
 def data():
-    return jsonify({"state": state, "controlls": controlls,"packet_loss":packet_loss,"armed":armed,"flaps":flaps,"ccs":ccs,"release":release,"sas":sas,"voltage":"X "})
+    return jsonify({"state": state, "controlls": controlls,"packet_loss":packet_loss,"armed":armed,"flaps":flaps,"ccs":ccs,"release":release,"sas":sas,"voltage":"X ","weak":weak})
 
 if __name__ == "__main__":
     app.run(debug=False)

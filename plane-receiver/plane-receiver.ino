@@ -95,7 +95,7 @@ void loop() {
 
   servos[0].write(MIN(MAX(left_roll,0),180));
   servos[1].write(MIN(MAX(right_roll,0),180));
-  servos[2].write(180-received_pitch);
+  servos[2].write(received_pitch);
   servos[3].write(received_yaw);
   servos[4].write(received_motor);
   servos[5].write(180-release*180);
@@ -125,11 +125,11 @@ void setup_radio(){
 }
 
 void setup_servo(){
-  servos[0].attach(servo_pins[0]);
-  servos[1].attach(servo_pins[1]);
-  servos[2].attach(servo_pins[2],600,2400);
-  servos[3].attach(servo_pins[3],1200,1800);
-  servos[4].attach(servo_pins[4],1200,1800);
+  servos[0].attach(servo_pins[0],800,2200);
+  servos[1].attach(servo_pins[1],800,2200);
+  servos[2].attach(servo_pins[2],1000,1900);
+  servos[3].attach(servo_pins[3],1000,2000);
+  servos[4].attach(servo_pins[4],1000,2000);
   servos[5].attach(servo_pins[5]);
 }
 void mpu_begin(){
@@ -182,8 +182,8 @@ void mpu_update_pid(){
   dt=(now-last_read_gyro)/1000.0;
   pid_roll = (gyro_x_prop*k_p+gyro_x_int*k_i);
 
-  left_roll=90+pid_roll-flaps*90;
-  right_roll=90+pid_roll+flaps*90;
+  left_roll=90+pid_roll*(float)((float)flaps*0.5+1)-flaps*90;
+  right_roll=90+pid_roll*(float)((float)flaps*0.5+1)+flaps*90;
 
   if((left_roll>0 && left_roll<180) || (right_roll>0 && left_roll<180)){
     gyro_x_int+=gyro_x_prop*dt;//                                     deg

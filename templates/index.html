@@ -129,6 +129,9 @@
         <div id="sas" class="component">
             <h1>SAS</h1>
         </div>
+        <div id="weak" class="component">
+            <h1>WEAK</h1>
+        </div>
     </div>
 </div>
 
@@ -192,7 +195,12 @@
         else {
             document.getElementById("voltage").style.color = "orange"
         }
-
+        if (data.weak) {
+            document.getElementById("weak").style.color = "green"
+        }
+        else {
+            document.getElementById("weak").style.color = "red"
+        }
     }
 
     setInterval(getData, 10);
