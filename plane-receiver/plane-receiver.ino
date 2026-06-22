@@ -127,8 +127,8 @@ void setup_radio(){
 void setup_servo(){
   servos[0].attach(servo_pins[0],800,2200);
   servos[1].attach(servo_pins[1],800,2200);
-  servos[2].attach(servo_pins[2],1000,1900);
-  servos[3].attach(servo_pins[3],1000,2000);
+  servos[2].attach(servo_pins[2],850,2000);
+  servos[3].attach(servo_pins[3],870,2000);
   servos[4].attach(servo_pins[4],1000,2000);
   servos[5].attach(servo_pins[5]);
 }
@@ -182,8 +182,8 @@ void mpu_update_pid(){
   dt=(now-last_read_gyro)/1000.0;
   pid_roll = (gyro_x_prop*k_p+gyro_x_int*k_i);
 
-  left_roll=90+pid_roll*(float)((float)flaps*0.5+1)-flaps*90;
-  right_roll=90+pid_roll*(float)((float)flaps*0.5+1)+flaps*90;
+  left_roll=90+pid_roll*(float)((float)flaps*0.2+1)-flaps*90;
+  right_roll=90+pid_roll*(float)((float)flaps*0.3+1)+flaps*90;
 
   if((left_roll>0 && left_roll<180) || (right_roll>0 && left_roll<180)){
     gyro_x_int+=gyro_x_prop*dt;//                                     deg
